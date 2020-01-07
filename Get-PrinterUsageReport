@@ -1,0 +1,48 @@
+function Get-PrinterUsageReport {
+    [CmdletBinding()]
+    param (
+        # OutputDirectory
+        [Parameter()]
+        [STRING]
+        $OutputDirectory = $env:USERPROFILE + "\Documents\Reports\",
+        # ReportTitle
+        [Parameter()]
+        [STRING]
+        $ReportTitle = "PrinterUsageReport",
+        # Export CSV switch - will just return data if not selected
+        [Parameter()]
+        [SWITCH]
+        $ExportCsv
+
+    )
+
+    begin {
+        $TimeStamp = Get-date -Format("yyyy-MM-dd")
+        $OutputFilePath = $OutputDirectory + $ReportTitle + "_" + $TimeStamp + ".csv"
+    }
+
+    process {
+        $PrintEventsFromLog = Get-WinEvent -FilterHashTable @{LogName = 'Microsoft-Windows-PrintService/Operational'; id = '307' }
+        [System.Collections.ArrayList]$PrintReportDataArray = @()
+        foreach ($PrintEvent in $PrintEventsFromLog) {
+            $PrintReportData = [PSCustomObject]@{
+                User        = $PrintEvent.Properties[2].value
+                PrinterName = $PrintEvent.Properties[4].value
+                PrinterPort = $PrintEvent.Properties[5].value
+                TimeCreated = $PrintEvent.TimeCreated
+            }
+            $PrintReportDataArray.Add($PrintReportData) 
+        }
+    }
+
+    end {
+        if ($ExportCsv) {
+            If (!(test-path $OutputDirectory)) { New-Item -ItemType Directory -Force -Path $OutputDirectory; Write-Output "Directory Created" }
+            $PrintReportDataArray | Export-Csv $OutputFilePath -NoTypeInformation; Write-Output "Report Exported: $($OutputFilePath)"
+        }else{$PrintReportDataArray}
+    }
+}
+
+# Get-PrinterUsageReport -ExportCsv
+
+
