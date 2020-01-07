@@ -1,3 +1,5 @@
+# Requires Functional Event Log: 'Microsoft-Windows-PrintService/Operational' (Disabled by default)
+
 function Get-PrinterUsageReport {
     [CmdletBinding()]
     param (
