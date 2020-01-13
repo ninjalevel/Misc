@@ -1,0 +1,56 @@
+
+#region HELPER FUNCTIONS
+
+function set-DisabledWindowsServices {
+    # Disable Windows Services
+    $serviceNames = "trusted", "wuauserv"
+    foreach ($serviceName in $serviceNames) {
+        get-service "*$($serviceName)*" | Set-Service -StartupType Disabled
+        Write-Output "Service $($serviceName) $((get-service "*$($serviceName)*").StartType)"
+    }
+    #     remove-item "C:\windows\SoftwareDistribution\Download\*" -recurse -force
+}
+
+
+
+function set-WindowsTaskbar {
+    # Disable Server Manager, NoTaskGrouping, TaskbarSmallIcons
+    Write-Output "Disable Server Manager, Set NoTaskGrouping, Set TaskbarSmallIcons"
+    New-ItemProperty -Path HKCU:\Software\Microsoft\ServerManager -Name DoNotOpenServerManagerAtLogon -PropertyType DWORD -Value "0x1" –Force
+    New-Item -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies -Name Explorer
+    New-Item -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Name Advanced
+    New-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer -Name NoTaskGrouping -PropertyType DWORD -Value "0x1" –Force
+    New-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Advanced -Name TaskbarSmallIcons -PropertyType DWORD -Value "0x1" –Force
+
+}
+
+#endregion
+
+function set-dbServerConfig {
+    [CmdletBinding()]
+    param (# DisabledWindowsServices
+        [Parameter()]
+        [SWITCH]
+        $DisableWindowsServices,
+        # Set Windows Taskbar
+        [Parameter()]
+        [SWITCH]
+        $SetWindowsTaskbar
+    )
+
+    begin {
+
+    }
+
+    Process {
+        IF ($DisableWindowsServices) { set-DisabledWindowsServices }
+        IF ($SetWindowsTaskbar) { set-WindowsTaskbar }
+
+
+    }
+
+    end {
+
+    }
+}
+set-dbServerConfig -DisableWindowsServices -SetWindowsTaskbar
