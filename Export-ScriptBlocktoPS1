@@ -1,0 +1,49 @@
+function Export-ScriptBlocktoPS1 {
+    [CmdletBinding()]
+    param (
+        # ClientName
+        [Parameter(Mandatory)]
+        [STRING]
+        $ClientName,
+        # ProjectName
+        [Parameter(Mandatory)]
+        [STRING]
+        $ProjectName,
+        # PowerShellScriptBlock
+        [Parameter(Mandatory)]
+        [STRING]
+        $PowerShellScriptBlock,
+        # PowerShellScriptName
+        [Parameter(Mandatory)]
+        [STRING]
+        $ScriptName
+
+    )
+
+    begin {
+        # Define Variables
+
+        $Timestamp = get-date -Format ("yyyyMMddHHmmss")
+        $OutputDir = "$($env:USERPROFILE)\documents\$($CLIENTNAME)\$($PROJECTNAME)\PowerShell"
+        $OutputFilepath = "$($OUTPUTDIR)\$($ScriptName).ps1"
+
+        # Create Directories if they don't exist
+        If (!(test-path $OutputDir)) {
+            New-Item -ItemType Directory -Force -Path $OUTPUTDIR
+            New-Item -ItemType Directory -Force -Path "$($OUTPUTDIR)\Backup"
+        }
+    }
+
+    process {
+        # Backup previous script if it exists
+        IF((test-path $OutputFilepath)){Move-Item $OutputFilepath "$($OutputDir)\backup\$($ScriptName)_$($Timestamp).ps1"}
+
+        # Create PS1
+        $PowerShellScriptBlock | Out-File "$($OutputFilepath)"
+    }
+
+    end {
+        start $OutputDir
+    }
+}
+# Export-ScriptBlocktoPS1 -ClientName 'AUMA' -ProjectName 'SMB' -PowerShellScriptBlock $PowerShellScriptBlock -ScriptName "Test"
