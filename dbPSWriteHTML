@@ -1,0 +1,78 @@
+Import-Module PSWriteHTML
+
+$BuildENV = 'Prod'
+
+#STEP: GET-CSV DATA
+#NOTE: FOR USE LATER
+$SystemSplat = @{
+
+    Environment = 'Longview'
+    Client      = 'AUMA'
+    Project     = 'SMB'
+}
+
+
+
+$InputDirectory = ""
+$ClientDirectory = ""
+
+
+
+$Client = ($InputDirectory.Split('OneDrive - Long View Systems\')[1]).split('\')[1]
+$Project = ($InputDirectory.Split('OneDrive - Long View Systems\')[1]).split('\')[2]
+$ProjectDetail = 'AD Object Cleanup - Workstations'
+
+$Client
+$Project
+$DashboardName = "$($Client)-$($Project)-$($ProjectDetail)"
+
+$CSVLIST = Get-ChildItem $InputDirectory | Where-Object { $_.Name -like "*.csv" -and $_.name -notlike "*_ignore*"}
+$ITEMCOUNT = ($CSV | Measure-Object).count
+
+$EXAMPLE = $TRUE
+$DataSetNumber = 1
+IF ($EXAMPLE) {
+    #STEP: Generate Dashboard Example for Reference
+    Dashboard -Name $DashboardName -FilePath "$($ClientDirectory)\$($DashboardName).html" -Show {
+        foreach ($csv in $CSVLIST ) {
+            Section -Name "$($DataSetNumber) $($csv.name)" -HeaderBackGroundColor Cyprus {
+                Panel {
+                    Table -DataTable (import-csv $CSV)
+                } # DataSetNumber { END
+            } # Section -Name END
+
+            $DataSetNumber++
+        } # foreach ($csv in $CSVLIST ) END
+    }
+
+}
+
+
+
+# FILTER INBOUND CSVS
+
+$DataSetNumber = 1
+$Reference = foreach ($csvITEM in $CSVLIST ) {
+
+    #$LISTdata = import-csv $csvITEM
+    $LISTNoteProperties = (import-csv $csvITEM) | Get-Member | Where-Object { $_.membertype -like "*NoteProperty*" }
+
+    # Create Custom Object
+
+    $TempVar = [PSCustomObject]@{
+        FileName = $csvITEM.name
+        FullPath = $csvITEM.fullname
+    }
+    foreach ($Property in $LISTNoteProperties) { $TempVar | Add-Member -MemberType noteproperty -name "$($Property.name)" -Value $($Property.Definition).split('=')[1] }
+    $TempVar | Add-Member -MemberType noteproperty -name 'DataSetNumber' -Value $DataSetNumber
+    $TempVar | Add-Member -MemberType noteproperty -name 'DashboardSection' -Value ''
+    $DataSetNumber++
+    $TempVar
+
+}
+
+$Reference | clip
+$Reference | select FileName,FullPath | fl | clip
+
+
+
