@@ -47,4 +47,4 @@ function Export-ProjectScriptResults {
         Start-Process $OutputDir
     }
 }
-# Export-ProjectScriptResults -ExportData -ClientName 'AUMA' -ProjectName 'SMB' -ReportName 'CheckWSman' -InputData $InputData
+# Export-ProjectScriptResults -ExportData -ClientName '' -ProjectName '' -ReportName '' -InputData $InputData
